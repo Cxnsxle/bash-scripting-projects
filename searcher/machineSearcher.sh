@@ -32,7 +32,9 @@ function helpPanel() {
 	echo -e "\t${purpleColor}y)${endColor} ${grayColor}Retrieve machine's YouTube link.${endColor}"
 	echo -e "\t${purpleColor}d)${endColor} ${grayColor}List machines by difficulty [Fácil,Media,Difícil,Insane].${endColor}"
 	echo -e "\t${purpleColor}o)${endColor} ${grayColor}List machines by OS [Linux,Windows].${endColor}"
-	echo -e "\t${purpleColor}h)${endColor} ${grayColor}Show help panel.${endColor}"
+	echo -e "\t${purpleColor}s)${endColor} ${grayColor}List machines by Skill.${endColor}"
+
+	echo -e "\n\t${purpleColor}h)${endColor} ${grayColor}Show help panel.${endColor}"
 
 	echo -e ""
 }
@@ -81,6 +83,8 @@ function updateFiles() {
 			echo -e "\n${grayColor}All files updated!${endColor}"
 		fi
 	fi
+
+	echo -e ""
 	tput cnorm
 }
 
@@ -93,6 +97,8 @@ function searchByIP() {
 	else
 		echo -e "\n${redColor}[!] ${endColor}${grayColor}There is not${endColor} ${blueColor}$ipAddress${endColor} ${grayColor}IP address.${endColor}\n"
 	fi
+
+	echo -e ""
 }
 
 function getYoutubeLink() {
@@ -104,6 +110,8 @@ function getYoutubeLink() {
 	else
 		echo -e "\n${redColor}[!] ${endColor}${grayColor}There is not${endColor} ${blueColor}$machineName${endColor} ${grayColor}machine.${endColor}\n"
 	fi
+
+	echo -e ""
 }
 
 function machinesByDifficulty() {
@@ -116,6 +124,8 @@ function machinesByDifficulty() {
 	else
 		echo -e "\n${redColor}[!] ${endColor}${grayColor}There are not machines with difficulty: ${endColor}${blueColor}$difficulty${endColor}\n"
 	fi
+
+	echo -e ""
 }
 
 function machinesByOS() {
@@ -128,6 +138,8 @@ function machinesByOS() {
 	else
 		echo -e "\n${redColor}[!] ${endColor}${grayColor}There are not machines with os: ${endColor}${blueColor}$os${endColor}\n"
 	fi
+
+	echo -e ""
 }
 
 function machinesByDifficultyOS() {
@@ -141,6 +153,22 @@ function machinesByDifficultyOS() {
 	else
 		echo -e "\n${redColor}[!] ${endColor}${grayColor}There are not machines with os: ${endColor}${blueColor}$os${endColor} ${grayColor}and difficulty: ${endColor}${purpleColor}$difficulty${endColor}\n"
 	fi
+
+	echo -e ""
+}
+
+function machinesBySkill() {
+	skill=$1
+	machines=$(cat bundle.js | grep -e "skills: " -B 7 | grep -e "$skill" -i -B 6 | grep -e "name: " | awk 'NF{print $NF}' | tr -d '",' | column)
+
+	if [ ! -z "$machines" ]; then
+		echo -e "\n${yellowColor}[+] ${endColor}${grayColor}Listing machines with skill: ${endColor}${blueColor}$skill${endColor}\n"
+		echo -e "$machines"
+	else
+		echo -e "\n${redColor}[!] ${endColor}${grayColor}There are not machines with skill ${endColor}${blueColor}$skill${endColor}\n"
+	fi
+
+	echo -e ""
 }
 
 # Triggers
@@ -148,7 +176,7 @@ declare -i difficulty_trigger=0
 declare -i os_trigger=0
 
 declare -i i=0
-while getopts "m:ui:y:d:o:h" arg; do
+while getopts "m:ui:y:d:o:s:h" arg; do
 	case $arg in
 		m) machineName=$OPTARG; let i+=1;;
 		u) let i+=2;;
@@ -156,6 +184,7 @@ while getopts "m:ui:y:d:o:h" arg; do
 		y) machineName=$OPTARG; let i+=4;;
 		d) difficulty=$OPTARG; difficulty_trigger=1; let i+=5;;
 		o) os=$OPTARG; os_trigger=1; let i+=6;;
+		s) skill=$OPTARG; let i+=7;;
 		h) ;;
 	esac
 done
@@ -174,6 +203,8 @@ elif [ $i -eq 6 ]; then
 	machinesByOS $os
 elif [ $difficulty_trigger -eq 1 ] && [ $os_trigger -eq 1 ]; then
 	machinesByDifficultyOS $difficulty $os
+elif [ $i -eq 7 ]; then
+	machinesBySkill $skill
 else
 	helpPanel
 fi
