@@ -83,15 +83,16 @@ function martingale() {
 		fi
 		#echo -e "${yellowColor}[+] ${endColor}${grayColor}Current amount: ${endColor}${turquoiseColor}\$/$amount${endColor}"
 
-		# Getting max amount obtained
+		# getting max amount obtained
 		if [ $amount -gt $max_amount ]; then
 			max_amount=$amount
 		fi
 
 		#sleep 1
 	done
-	# Money <= 0
-	echo -e "\n${redColor}[!] You LOSS all your money! :C${endColor}"
+
+	# money <= 0
+	echo -e "\n${redColor}[!] You loss ALL your money! :c${endColor}"
 	echo -e "${yellowColor}[+] ${endColor}${grayColor}Total bets: ${endColor}${greenColor}$play_counter${endColor}"
 	echo -e "${yellowColor}[+] ${endColor}${grayColor}List of bad plays: ${endColor}${redColor}$bad_plays${endColor}"
 	echo -e "${yellowColor}[+] ${endColor}${grayColor}Maximum amount obtained: ${endColor}${greenColor}$max_amount${endColor}"
@@ -103,7 +104,84 @@ function martingale() {
 }
 
 function inverseLabrouchere() {
-	echo -e "\nInverseLabrouchere"
+	amount=$1
+	sequence=(1 2 3 4)
+	echo -e ""
+	echo -e "${greenColor}[+] ${endColor}${grayColor}Let's start with sequence: ${endColor}${yellowColor}[${sequence[@]}]${endColor}"
+	echo -e "${greenColor}[+] ${endColor}${grayColor}Current amount: ${endColor}${yellowColor}\$/$amount${endColor}"
+	echo -ne "${greenColor}[+] ${endColor}${grayColor}Target to bet [even/odd] -> ${endColor}" && read even_odd
+
+	# hide cursor
+	tput civis
+
+	# variables
+	bet_mount=0
+	play_counter=0
+	max_amount=$amount
+
+	# infinite bucle
+	while [ $(($amount - $bet_mount)) -ge 0 ]; do
+		let play_counter+=1
+
+		random=$(($RANDOM % 37))
+		rand_evaluator=$(($random % 2)) # even(0) | odd(1)
+		bet_mount=$((${sequence[0]} + ${sequence[-1]}))
+		echo -e ""
+		echo -e "${grayColor}[+] ${endColor}${grayColor}Betting: ${endColor}${greenColor}$bet_mount${endColor}"
+		echo -e "${grayColor}[+] ${endColor}${grayColor}The number has come out: ${endColor}${turquoiseColor}$random${endColor}"
+
+		# Getting operation
+		if [ $random -eq 0 ]; then
+			rand_evaluator=0 # loss
+		elif [ "$even_odd" == "even" ] && [ $rand_evaluator -eq 0 ]; then
+			rand_evaluator=1 # win
+		elif [ "$even_odd" == "odd" ] && [ $rand_evaluator -eq 1 ]; then
+			rand_evaluator=1 # win
+		else
+			rand_evaluator=0
+		fi
+
+		# Playing
+		if [ $rand_evaluator -eq 1 ]; then
+			echo -e "\t${greenColor}[+] WIN!: +${endColor}"
+			amount=$(($amount + $bet_mount))
+			sequence+=($bet_mount)				# updating sequence
+			#bad_plays=""						# restore bad plays
+		else
+			echo -e "\t${redColor}[-] LOSS!: -${endColor}"
+			amount=$(($amount - $bet_mount))
+			# upadting sequence
+			unset sequence[0]
+			unset sequence[-1]
+			sequence=(${sequence[@]})
+			#bad_plays+="$random "				# append bad play
+		fi
+
+		# Verifying sequence size
+		if [ ${#sequence[@]} -lt 2 ]; then
+			sequence=(1 2 3 4)
+			echo -e "\t${redColor}[-] Lost sequence!, new sequence: ${endColor}[${sequence[@]}]${endColor}"
+		fi
+
+		echo -e ""
+		echo -e "${yellowColor}[+] ${endColor}${grayColor}Current amount: ${endColor}${turquoiseColor}\$/$amount${endColor}"
+		echo -e "${yellowColor}[+] ${endColor}${grayColor}Current sequence: ${endColor}${turquoiseColor}[${sequence[@]}]${endColor}"
+
+		# getting max amount obtained
+		if [ $amount -gt $max_amount ]; then
+			max_amount=$amount
+		fi
+
+		#sleep 1
+	done
+
+	# money <= 0
+	echo -e "\n${redColor}[!] You loss ALL your money! :c${endColor}"
+	echo -e "${yellowColor}[+] ${endColor}${grayColor}Total bets: ${endColor}${greenColor}$play_counter${endColor}"
+	echo -e "${yellowColor}[+] ${endColor}${grayColor}Maximum amount obtained: ${endColor}${greenColor}$max_amount${endColor}"
+
+	# unhide cursor
+	tput cnorm
 }
 
 while getopts "m:t:h" arg; do
@@ -118,7 +196,7 @@ if [ $amount ] && [ $technique ]; then
 	if [ $technique == "Martingale" ]; then
 		martingale $amount
 	elif [ $technique == "InverseLabrouchere" ]; then
-		inverseLabrouchere
+		inverseLabrouchere $amount
 	else
 		echo -e "\n${redColor}[!] ${endColor}${grayColor}There is not ${endColor}${blueColor}$technique ${endColor}${grayColor}technique.${endColor}\n"
 		helpPanel
